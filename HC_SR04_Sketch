@@ -1,0 +1,114 @@
+/**************************************
+ * -----------------------------------
+ * HC-SR04 ULTRASONIC SENSOR INTERFACE 
+ * -----------------------------------
+ * 
+ * Simple interface not based on any object 
+ * instantiation for the HC_SR04. 
+ **************************************/
+
+// Definitions 
+#define TRIG_PIN            9
+#define ECHO_PIN            10 
+#define OVERDISTANCE_PIN    7
+#define INRANGE_PIN         6
+#define LOWDISTANCE_PIN     5
+#define PAUSE_PIN           13
+#define STOP_PIN            12
+#define WAVE_SPEED          0.034                              // Speed is in cm/s  
+#define UPPER_DISTANCE      150.00                             // In cm 
+#define LOWER_DISTANCE      10.00                              // In cm 
+
+// Typedef 
+
+// Constants 
+const unsigned int uiTriggerPin       = TRIG_PIN; 
+const unsigned int uiEchoPin          = ECHO_PIN; 
+const unsigned int uiPausePin         = PAUSE_PIN; 
+const unsigned int uiOverDistanceLed  = OVERDISTANCE_PIN; 
+const unsigned int uiLowDistanceLed   = LOWDISTANCE_PIN; 
+const unsigned int uiInRangeLed       = INRANGE_PIN; 
+const unsigned int uiUpperDistance    = UPPER_DISTANCE; 
+const unsigned int uiLowerDistance    = LOWER_DISTANCE;  
+const unsigned int uiStopPin          = STOP_PIN;
+
+// Variables 
+float fDuration; 
+float fDistance; 
+
+void setup() 
+{
+  Serial.begin(9600); 
+
+  // Set GPIO pins
+  pinMode(uiOverDistanceLed, OUTPUT); 
+  pinMode(uiLowDistanceLed, OUTPUT); 
+  pinMode(uiPausePin, INPUT);
+  pinMode(uiInRangeLed, OUTPUT); 
+  pinMode(uiTriggerPin, OUTPUT); 
+  pinMode(uiEchoPin, INPUT); 
+  pinMode(uiStopPin, INPUT);
+
+}
+
+void loop() 
+{
+  if (digitalRead(uiStopPin) == HIGH)
+  {
+    while (digitalRead(uiPausePin) == HIGH)
+    {
+      // Clears the trigger pin 
+      digitalWrite(uiTriggerPin, LOW); 
+      delayMicroseconds(2); 
+    
+      // Sets the Trigger pin high for 10 micro seconds 
+      digitalWrite(uiTriggerPin, HIGH); 
+      delayMicroseconds(10); 
+      digitalWrite(uiTriggerPin, LOW); 
+    
+      // Reads the incoming pulse on the Echo pin 
+      fDuration = pulseIn(uiEchoPin, HIGH); 
+    
+      // Distance measurement 
+      fDistance = (fDuration * 0.034) / 2; 
+  
+      if (fDistance <= UPPER_DISTANCE && fDistance >= LOWER_DISTANCE)
+      {
+        digitalWrite(uiInRangeLed, HIGH); 
+        digitalWrite(uiLowDistanceLed, LOW); 
+        digitalWrite(uiOverDistanceLed, LOW); 
+        delayMicroseconds(10);
+      }
+  
+      if (fDistance < LOWER_DISTANCE)
+      {
+        digitalWrite(uiInRangeLed, LOW); 
+        digitalWrite(uiLowDistanceLed, HIGH); 
+        digitalWrite(uiOverDistanceLed, LOW); 
+        delayMicroseconds(10);
+      }
+  
+      if (fDistance > UPPER_DISTANCE)
+      {
+        digitalWrite(uiInRangeLed, LOW); 
+        digitalWrite(uiLowDistanceLed, LOW); 
+        digitalWrite(uiOverDistanceLed, HIGH);
+        delayMicroseconds(10);
+      }
+      
+      // Print the calculated distance on the serial port 
+      Serial.print("Distance : "); 
+      Serial.println(fDistance); 
+      delayMicroseconds(10);
+    } 
+  }
+  else
+  {
+    digitalWrite(uiInRangeLed, LOW); 
+    digitalWrite(uiLowDistanceLed, LOW); 
+    digitalWrite(uiOverDistanceLed, LOW);
+    delayMicroseconds(10);
+    Serial.end();
+    delayMicroseconds(10);
+  }
+}
